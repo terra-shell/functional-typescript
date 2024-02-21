@@ -1,3 +1,4 @@
+import { Future } from "./future";
 import { Option } from "./option";
 
 export enum MaybeState {
@@ -110,6 +111,40 @@ export class Maybe<T> {
             else
               maybe.fullfill(value.unwrap());
           });
+      });
+    });
+  }
+
+  public okOr<E>(error: E): Future<T, E> {
+    if (this.isUnfullfilled())
+      return Future.Rejected(error);
+
+    if (this.isFullfilled())
+      return Future.Resolved(this.value as T);
+
+    return Future.new((future) => {
+      this.then(value => {
+        if (value.isNone())
+          future.reject(error);
+        else
+          future.resolve(value.unwrap());
+      });
+    });
+  }
+
+  public okOrElse<E>(fn: () => E): Future<T, E> {
+    if (this.isUnfullfilled())
+      return Future.Rejected(fn());
+
+    if (this.isFullfilled())
+      return Future.Resolved(this.value as T);
+
+    return Future.new((future) => {
+      this.then(value => {
+        if (value.isNone())
+          future.reject(fn());
+        else
+          future.resolve(value.unwrap());
       });
     });
   }

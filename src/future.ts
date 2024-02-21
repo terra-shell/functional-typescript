@@ -1,3 +1,4 @@
+import { Matcher } from "./match";
 import { Maybe } from "./maybe";
 import { Result } from "./result";
 
@@ -10,16 +11,35 @@ enum FutureState {
 type FutureCallback<T, E> = (future: Future<T, E>) => any;
 
 export class Future<T, E> {
+  static FromResult<T, E>(result: Result<T, E>): Future<T, E> {
+    if (result.isOk())
+      return Future.Resolved(result.unwrap());
+    else
+      return Future.Rejected(result.unwrapErr());
+  }
+
   static Resolved<T, E>(value: T): Future<T, E> {
     return new Future<T, E>(FutureState.Resolved, value);
+  }
+
+  static ResolvesIn<T, E>(ms: number, value: T): Future<T, E> {
+    return new Future<T, E>(FutureState.Pending, (future) => {
+      setTimeout(() => future.resolve(value), ms);
+    });
   }
 
   static Rejected<T, E>(value: E): Future<T, E> {
     return new Future<T, E>(FutureState.Rejected, value);
   }
 
-  static new<T, E>(callback: FutureCallback<T, E>): Future<T, E> {
-    return new Future<T, E>(FutureState.Pending, callback);
+  static RejectsIn<T, E>(ms: number, value: E): Future<T, E> {
+    return new Future<T, E>(FutureState.Pending, (future) => {
+      setTimeout(() => future.reject(value), ms);
+    });
+  }
+
+  static new<T, E>(callback?: FutureCallback<T, E>): Future<T, E> {
+    return new Future<T, E>(FutureState.Pending, callback ?? (() => {}));
   }
 
   constructor(
@@ -131,12 +151,18 @@ export class Future<T, E> {
     });
   }
 
-  public flatMap<U>(fn: (value: T) => Future<U, E>): Future<U, E> {
+  public flatMap<U>(fn: (value: T) => Future<U, E> | Result<U, E>): Future<U, E> {
     if (this.isRejected())
       return this as unknown as Future<U, E>;
 
-    if (this.isResolved())
-      return fn(this.value as T);
+    if (this.isResolved()) {
+      const result = fn(this.value as T);
+
+      if (result instanceof Future)
+        return result;
+
+      return Future.FromResult(result);
+    }
 
     return Future.new((future) => {
       this.then(async result => {
@@ -148,6 +174,82 @@ export class Future<T, E> {
           else
             future.reject(val.unwrapErr());
         }
+        else
+          future.reject(result.unwrapErr());
+      });
+    });
+  }
+
+  and<OT, OE>(other: Future<OT, OE>): Future<[T, OT], E | OE> {
+    if (this.isRejected())
+      return this as unknown as Future<[T, OT], E | OE>;
+
+    if (other.isRejected())
+      return other as unknown as Future<[T, OT], E | OE>;
+
+    if (this.isResolved() && other.isResolved())
+      return Future.Resolved([this.value as T, other.value as OT]);
+
+    if (this.isResolved())
+      return other.map(value => [this.value as T, value] as [T, OT]) as unknown as Future<[T, OT], E | OE>;
+
+    if (other.isResolved())
+      return this.map(value => [value, other.value as OT] as [T, OT]) as unknown as Future<[T, OT], E | OE>;
+
+    return Future.new((future) => {
+      this.then(async result => {
+        if (result.isOk()) {
+          const val = await other;
+
+          if (val.isOk())
+            future.resolve([result.unwrap(), val.unwrap()]);
+          else
+            future.reject(val.unwrapErr());
+        }
+        else
+          future.reject(result.unwrapErr());
+      });
+    });
+  }
+
+  public match(): Matcher {
+    return Matcher.new(evaluator => this.map(evaluator))
+  }
+
+  public flatMatch(): Matcher {
+    return Matcher.new(evaluator => this.flatMap(evaluator))
+  }
+
+  public race(other: Future<T, E>): Future<T, E> {
+    if (this.isResolved() || this.isRejected())
+      return this;
+
+    if (other.isResolved() || other.isRejected())
+      return other;
+
+    return Future.new((future) => {
+      let cancelled = false;
+
+      this.then(result => {
+        if (cancelled)
+          return;
+
+        cancelled = true;
+
+        if (result.isOk())
+          future.resolve(result.unwrap());
+        else
+          future.reject(result.unwrapErr());
+      });
+
+      other.then(result => {
+        if (cancelled)
+          return;
+
+        cancelled = true;
+
+        if (result.isOk())
+          future.resolve(result.unwrap());
         else
           future.reject(result.unwrapErr());
       });
