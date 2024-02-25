@@ -3,7 +3,7 @@ import { Future } from "./future";
 
 const MatchFailed = Symbol('MatchFailed');
 
-export class Matcher {
+export class Matcher<V  = never> {
   static new(terminationHandler: (evaluator: (data: any) => any) => any) {
     return new Matcher(terminationHandler);
   }
@@ -28,7 +28,11 @@ export class Matcher {
     return this.terminationHandler(this.evaluate.bind(this));
   }
 
-  instanceof<T, R>(type: new (...args: any[]) => T, matcher: (x: T) => R): Matcher {
+  public end() {
+    return this.otherwise(undefined);
+  }
+
+  instanceof<T, R>(type: new (...args: any[]) => T, matcher: (x: T) => R): Matcher<V | R> {
     this.checks.push((data: any) => {
       if (data instanceof type) {
         return matcher(data);
@@ -40,7 +44,7 @@ export class Matcher {
     return this;
   }
 
-  is<T, R>(value: T, matcher: (x: T) => R): Matcher {
+  is<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
     this.checks.push((data: any) => {
       if (data === value) {
         return matcher(data);
@@ -52,7 +56,7 @@ export class Matcher {
     return this;
   }
 
-  not<T, R>(value: T, matcher: (x: T) => R): Matcher {
+  not<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
     this.checks.push((data: any) => {
       if (data !== value) {
         return matcher(data);
@@ -64,7 +68,55 @@ export class Matcher {
     return this;
   }
 
-  otherwise<R>(constant: R): Matcher {
+  gt<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
+    this.checks.push((data: any) => {
+      if (data > value) {
+        return matcher(data);
+      }
+
+      return MatchFailed;
+    });
+
+    return this;
+  }
+
+  gte<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
+    this.checks.push((data: any) => {
+      if (data >= value) {
+        return matcher(data);
+      }
+
+      return MatchFailed;
+    });
+
+    return this;
+  }
+
+  lt<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
+    this.checks.push((data: any) => {
+      if (data < value) {
+        return matcher(data);
+      }
+
+      return MatchFailed;
+    });
+
+    return this;
+  }
+
+  lte<T, R>(value: T, matcher: (x: T) => R): Matcher<V | R> {
+    this.checks.push((data: any) => {
+      if (data <= value) {
+        return matcher(data);
+      }
+
+      return MatchFailed;
+    });
+
+    return this;
+  }
+
+  otherwise<R>(constant: R): V | R {
     this.checks.push((data: any) => {
       return constant;
     });
@@ -72,7 +124,7 @@ export class Matcher {
     return this.terminate();
   }
 
-  else<R>(generator: () => R): Matcher {
+  else<R>(generator: () => R): V | R {
     this.checks.push((data: any) => {
       return generator();
     });

@@ -148,4 +148,32 @@ export class Maybe<T> {
       });
     });
   }
+
+  or(maybe: Maybe<T>): Maybe<T> {
+    if (this.isFullfilled())
+      return this;
+    
+    return Maybe.new((maybe) => {
+      this.then(value => {
+        if (value.isNone())
+          maybe.unfullfill();
+        else
+          maybe.fullfill(value.unwrap());
+      });
+    });
+  }
+
+  and(maybe: Maybe<T>): Maybe<T> {
+    if (this.isUnfullfilled())
+      return this;
+
+    return Maybe.new((maybe) => {
+      this.then(value => {
+        if (value.isNone())
+          maybe.unfullfill();
+        else
+          maybe.fullfill(value.unwrap());
+      });
+    });
+  }
 }

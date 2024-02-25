@@ -68,4 +68,18 @@ export class Option<T> {
 
     return fn(this.value as T);
   }
+
+  or(maybe: Option<T>): Option<T> {
+    if (this.isSome())
+      return this;
+
+    return maybe;
+  }
+
+  and(maybe: Option<T>): Option<T> {
+    if (this.isNone())
+      return this;
+
+    return maybe;
+  }
 }

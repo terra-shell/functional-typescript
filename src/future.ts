@@ -212,11 +212,11 @@ export class Future<T, E> {
     });
   }
 
-  public match(): Matcher {
+  public match() {
     return Matcher.new(evaluator => this.map(evaluator))
   }
 
-  public flatMatch(): Matcher {
+  public flatMatch() {
     return Matcher.new(evaluator => this.flatMap(evaluator))
   }
 
