@@ -2,7 +2,7 @@ import { Matcher } from "./match";
 import { Maybe } from "./maybe";
 import { Result } from "./result";
 
-enum FutureState {
+export enum FutureState {
   Pending,
   Resolved,
   Rejected
