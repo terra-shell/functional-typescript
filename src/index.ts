@@ -2,3 +2,8 @@ export * from "./future";
 export * from "./maybe";
 export * from "./option";
 export * from "./result";
+export * from "./asyncIterator";
+export * from "./enum";
+export * from "./fn";
+export * from "./iterator";
+export * from "./match";
