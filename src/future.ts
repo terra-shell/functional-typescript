@@ -117,6 +117,10 @@ export class Future<T, E> {
   public async expect(message: string): Promise<T> { return (await this.resolved()).expect(message); }
   public async expectErr(message: string): Promise<E> { return (await this.rejected()).expect(message); }
 
+  public mapInstanceOf<K extends abstract new (...args: any) => any, N>(klass: K, mapper: (value: InstanceType<K>) => N): Future<Extract<T, InstanceType<K>> | N, E> {
+    return this.map(t => t instanceof klass ? mapper(t as any) : t) as any;
+  }
+
   public map<U>(fn: (value: T) => U): Future<U, E> {
     if (this.isRejected())
       return this as unknown as Future<U, E>;
@@ -132,6 +136,10 @@ export class Future<T, E> {
           future.reject(result.unwrapErr());
       });
     });
+  }
+
+  public mapErrInstanceOf<K extends abstract new (...args: any) => any, N>(klass: K, mapper: (value: InstanceType<K>) => N): Future<T, Extract<E, InstanceType<K>> | N> {
+    return this.mapErr(t => t instanceof klass ? mapper(t as any) : t) as any;
   }
 
   public mapErr<F>(fn: (value: E) => F): Future<T, F> {

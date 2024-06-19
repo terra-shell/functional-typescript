@@ -92,11 +92,31 @@ export class Result<T, E> {
     return this.value as E;
   }
 
+  mapInstanceOf<K extends abstract new (...args: any) => any, N>(klass: K, mapper: (value: InstanceType<K>) => N): Result<Extract<T, InstanceType<K>> | N, E> {
+    if (this.isErr())
+      return Result.err(this.value as E);
+
+    if (this.value instanceof klass)
+      return Result.ok(mapper(this.value as InstanceType<K>));
+
+    return Result.ok(this.value as T);
+  }
+
   map<U>(fn: (value: T) => U): Result<U, E> {
     if (this.isErr())
       return Result.err(this.value as E);
 
     return Result.ok(fn(this.value as T));
+  }
+
+  mapErrInstanceOf<K extends abstract new (...args: any) => any, N>(klass: K, mapper: (value: InstanceType<K>) => N): Result<T, Extract<E, InstanceType<K>> | N> {
+    if (this.isOk())
+      return Result.ok(this.value as T);
+
+    if (this.value instanceof klass)
+      return Result.err(mapper(this.value as InstanceType<K>));
+
+    return Result.err(this.value as E);
   }
 
   mapErr<U>(fn: (value: E) => U): Result<T, U> {
