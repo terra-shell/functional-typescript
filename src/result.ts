@@ -19,8 +19,8 @@ export class Result<T, E> {
     private value: T | E
   ) {}
 
-  isOk(): boolean { return this.state === ResultState.Ok; }
-  isErr(): boolean { return this.state === ResultState.Err; }
+  isOk(): this is Result<T, never> { return this.state === ResultState.Ok; }
+  isErr(): this is Result<never, E> { return this.state === ResultState.Err; }
 
   ok(): Option<T> {
     if (this.isErr())
