@@ -1,6 +1,6 @@
 {
-  "name": "@drop-sh/functional-typescript",
-  "version": "2.2.1",
+  "name": "@terra-shell/functional-typescript",
+  "version": "2.2.2",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
