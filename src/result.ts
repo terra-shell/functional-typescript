@@ -20,9 +20,9 @@ export class Result<T, E> {
 
   static try<T>(callback: () => T): ResultBuilder<T, unknown> {
     try {
-      return Result.fromError(Result.ok(callback()))
+      return new ResultBuilder(Result.ok(callback()))
     } catch(err) {
-      return Result.fromError(Result.err(err))
+      return new ResultBuilder(Result.err(err))
     }
   }
 
