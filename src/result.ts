@@ -14,6 +14,10 @@ export class Result<T, E> {
     return new Result<T, E>(ResultState.Err, value);
   }
 
+  static fromError<E>(error: E): ResultErrorBuilder<E> {
+    return new ResultErrorBuilder(error)
+  }
+
   private constructor(
     private state: ResultState,
     private value: T | E
@@ -124,5 +128,28 @@ export class Result<T, E> {
       return Result.ok(this.value as T);
 
     return Result.err(fn(this.value as E));
+  }
+}
+
+class ResultErrorBuilder<E, AllowedTypes extends any[] = []> {
+  constructor(private baseError: E) {}
+
+  private allowedTypes: AllowedTypes = [] as any;
+
+  ifInstanceOf<T>(type: T): ResultErrorBuilder<E, [...AllowedTypes, T]> {
+    this.allowedTypes.push(type);
+    return this as any;
+  }
+
+  otherwiseThrow(): Result<never, {
+    [key in keyof AllowedTypes]: InstanceType<AllowedTypes[key]>;
+  }> {
+    for (let i = 0; i < this.allowedTypes.length; i++) {
+      if (this.baseError instanceof this.allowedTypes[i]) {
+        return Result.err(this.baseError) as any;
+      }
+    }
+
+    throw this.baseError;
   }
 }
