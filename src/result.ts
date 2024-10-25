@@ -144,7 +144,7 @@ class ResultBuilder<T, E, AllowedTypes extends any[] = []> {
 
   private allowedTypes: AllowedTypes = [] as any;
 
-  allowErrInstanceOf<T>(type: T): ResultBuilder<E, [...AllowedTypes, T]> {
+  allowErrInstanceOf<Et>(type: Et): ResultBuilder<T, E, [...AllowedTypes, Et]> {
     this.allowedTypes.push(type);
     return this as any;
   }
