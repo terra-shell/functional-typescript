@@ -1,12 +1,49 @@
 {
   "name": "@terrashell/functional-typescript",
-  "version": "2.6.0",
-  "description": "",
-  "main": "dist/index.js",
+  "version": "2.6.3",
+  "main": "./lib/cjs/index.js",
+  "types": "./lib/types/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsc && node build",
+    "clean": "rimraf ./lib",
+    "build": "tsc && rollup -c -m",
+    "prepack": "pnpm build"
   },
-  "author": "",
-  "license": "ISC"
+  "author": "Terrashell SDK Team <sdk+typscript@terrashell.com>",
+  "contributors": [
+    {
+      "name": "Rose Hall",
+      "email": "rose@terrashell.com"
+    }
+  ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/types/index.d.ts",
+        "default": "./lib/esm/index.mjs"
+      },
+      "require": {
+        "types": "./lib/types/index.d.ts",
+        "default": "./lib/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "lib/cjs/**/*",
+    "lib/esm/**/*",
+    "lib/types/**/*",
+    "README.md",
+    "LICENSE",
+    "tsconfig.json"
+  ],
+  "repository": "github:terra-shell/functional-typescript",
+  "license": "MIT",
+  "description": "The SDK for building software that interacts with Terrashell",
+  "packageManager": "pnpm@8.5.1",
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-sucrase": "^5.0.2",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.24.0"
+  }
 }
