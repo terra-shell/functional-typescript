@@ -14,8 +14,16 @@ export class Result<T, E> {
     return new Result<T, E>(ResultState.Err, value);
   }
 
-  static fromError<E>(error: E): ResultErrorBuilder<E> {
-    return new ResultErrorBuilder(error)
+  static fromError<T, E>(error: E): ResultBuilder<T, E> {
+    return new ResultBuilder(Result.err(error))
+  }
+
+  static try<T>(callback: () => T): ResultBuilder<T, unknown> {
+    try {
+      return Result.fromError(Result.ok(callback()))
+    } catch(err) {
+      return Result.fromError(Result.err(err))
+    }
   }
 
   private constructor(
@@ -131,25 +139,30 @@ export class Result<T, E> {
   }
 }
 
-class ResultErrorBuilder<E, AllowedTypes extends any[] = []> {
-  constructor(private baseError: E) {}
+class ResultBuilder<T, E, AllowedTypes extends any[] = []> {
+  constructor(private result: Result<T, E>) {}
 
   private allowedTypes: AllowedTypes = [] as any;
 
-  ifInstanceOf<T>(type: T): ResultErrorBuilder<E, [...AllowedTypes, T]> {
+  allowErrInstanceOf<T>(type: T): ResultBuilder<E, [...AllowedTypes, T]> {
     this.allowedTypes.push(type);
     return this as any;
   }
 
-  otherwiseThrow(): Result<never, {
+  otherwiseThrow(): Result<T, {
     [key in keyof AllowedTypes]: InstanceType<AllowedTypes[key]>;
   }[number]> {
+    if (this.result.isOk())
+      return this.result;
+
+    let v = this.result.unwrapErr();
+
     for (let i = 0; i < this.allowedTypes.length; i++) {
-      if (this.baseError instanceof this.allowedTypes[i]) {
-        return Result.err(this.baseError) as any;
+      if (v instanceof this.allowedTypes[i]) {
+        return this.result as any;
       }
     }
 
-    throw this.baseError;
+    throw v;
   }
 }
