@@ -5,7 +5,7 @@ export type EnumInstance<T> = T extends TranslateTypeToStatic<infer U> ? (Transl
 
 export const Default = Symbol("Default");
 
-interface BaseInstance<T extends { [key: string]: { new(...args: any): any } }> {
+export interface BaseInstance<T extends { [key: string]: { new(...args: any): any } }> {
   when<K extends keyof T, RT>(object: (...args: ConstructorParameters<T[K]>) => TranslateTypeToWellDefined<T, K>, handler: (instance: InstanceType<T[K]>) => RT): RT extends Promise<infer U> ? Maybe<U> : Option<RT>;
   asyncWhen<K extends keyof T, RT>(object: (...args: ConstructorParameters<T[K]>) => TranslateTypeToWellDefined<T, K>, handler: (instance: InstanceType<T[K]>) => Promise<RT>): Maybe<RT>;
   match<K extends keyof T, H extends ({
@@ -19,7 +19,7 @@ type TranslateTypeToStatic<T extends { [key: string]: { new(...args: any): any }
   [K in keyof T]: <V extends { new(...args: any): any }>(this: V, ...args: ConstructorParameters<T[K]>) => TranslateTypeToWellDefined<T, K> & InstanceType<V>;
 } & X<T>;
 
-interface X<T extends { [key: string]: { new(...args: any): any } }> {
+export interface X<T extends { [key: string]: { new(...args: any): any } }> {
   new(current: keyof T, value: InstanceType<T[keyof T]>): TranslateTypeToInstance<T>;
 }
 
