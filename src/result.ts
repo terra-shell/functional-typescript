@@ -121,6 +121,20 @@ export class Result<T, E> {
     return Result.ok(fn(this.value as T));
   }
 
+  flatMap<Nt, Ne>(fn: (value: T) => Result<Nt, Ne>): Result<Nt, Ne | E> {
+    if (this.isErr())
+      return Result.err(this.value as E);
+
+    return fn(this.value as T);
+  }
+
+  flatMapErr<Nt, Ne>(fn: (value: E) => Result<Nt, Ne>): Result<Nt | T, Ne> {
+    if (this.isErr())
+      return fn(this.value as E);
+
+    return Result.ok(this.value as T);
+  }
+
   mapErrInstanceOf<K extends abstract new (...args: any) => any, N>(klass: K, mapper: (value: InstanceType<K>) => N): Result<T, Exclude<E, InstanceType<K>> | N> {
     if (this.isOk())
       return Result.ok(this.value as T);
