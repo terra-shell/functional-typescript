@@ -142,7 +142,7 @@ class ResultErrorBuilder<E, AllowedTypes extends any[] = []> {
   }
 
   otherwiseThrow(): Result<never, {
-    [key in keyof AllowedTypes]: InstanceType<AllowedTypes[key]>;
+    [key in keyof AllowedTypes]: InstanceType<AllowedTypes[key]>[number];
   }> {
     for (let i = 0; i < this.allowedTypes.length; i++) {
       if (this.baseError instanceof this.allowedTypes[i]) {
