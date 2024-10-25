@@ -1,5 +1,5 @@
 {
-  "name": "@terra-shell/functional-typescript",
+  "name": "@terrashell/functional-typescript",
   "version": "2.2.6",
   "description": "",
   "main": "dist/index.js",
