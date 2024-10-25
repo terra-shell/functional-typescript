@@ -34,14 +34,14 @@ export class Option<T> {
     return this.value as T;
   }
 
-  unwrapOr(defaultValue: T): T {
+  unwrapOr<OtherT>(defaultValue: OtherT): T | OtherT {
     if (this.isSome())
       return this.value as T;
 
     return defaultValue;
   }
 
-  unwrapOrElse(fn: () => T): T {
+  unwrapOrElse<OtherT>(fn: () => OtherT): T | OtherT {
     if (this.isSome())
       return this.value as T;
 
@@ -50,7 +50,7 @@ export class Option<T> {
 
   expect(message: string): T {
     if (this.isNone())
-      throw new Error(message);
+      throw new Error(`Option.expect() failed. expected... ${message}`);
 
     return this.value as T;
   }
