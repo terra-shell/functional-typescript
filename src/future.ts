@@ -133,17 +133,19 @@ export class Future<T, E> {
     return this.map(t => t instanceof klass ? mapper(t as any) : t) as any;
   }
 
-  public map<U>(fn: (value: T) => U): Future<U, E> {
+  public map<U>(fn: (value: T) => U): Future<Awaited<U>, E> {
     if (this.isRejected())
-      return this as unknown as Future<U, E>;
+      return this as unknown as Future<Awaited<U>, E>;
 
     if (this.isResolved())
-      return Future.Resolved(fn(this.value as T));
-
+      return Future.new(async (f) => {
+        f.resolve(await fn(this.value as T));
+      })
+      
     return Future.new((future) => {
-      this.then(result => {
+      this.then(async result => {
         if (result.isOk())
-          future.resolve(fn(result.unwrap()));
+          future.resolve(await fn(result.unwrap()));
         else
           future.reject(result.unwrapErr());
       });
