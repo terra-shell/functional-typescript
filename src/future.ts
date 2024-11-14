@@ -18,6 +18,18 @@ export class Future<T, E> {
       return Future.Rejected(result.unwrapErr());
   }
 
+  static fromPromise<T, E>(value: Promise<Result<T, E>>): Future<T, E> {
+    return new this(FutureState.Pending, (cb) => {
+      value.then(r => {
+        if (r.isOk()) {
+          cb.resolve(r.unwrap());
+        } else {
+          cb.reject(r.unwrapErr());
+        }
+      })
+    })
+  }
+
   static Resolved<T, E>(value: T): Future<T, E> {
     return new Future<T, E>(FutureState.Resolved, value);
   }
