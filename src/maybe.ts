@@ -108,19 +108,21 @@ export class Maybe<T> {
   public async unwrapOrElse(fn: () => T): Promise<T> { return (await this).unwrapOrElse(fn); }
   public async expect(message: string): Promise<T> { return (await this).expect(message); }
 
-  public map<U>(fn: (value: T) => U): Maybe<U> {
+  public map<U>(fn: (value: T) => U): Maybe<Awaited<U>> {
     if (this.isUnfullfilled())
       return Maybe.Unfullfilled();
 
     if (this.isFullfilled())
-      return Maybe.Fullfilled(fn(this.value as T));
+      return Maybe.new(async m => {
+        m.fullfill(await fn(this.value as T));
+      });
 
     return Maybe.new((maybe) => {
-      this.then(value => {
+      this.then(async value => {
         if (value.isNone())
           maybe.unfullfill();
         else
-          maybe.fullfill(fn(value.unwrap()));
+          maybe.fullfill(await fn(value.unwrap()));
       });
     });
   }
