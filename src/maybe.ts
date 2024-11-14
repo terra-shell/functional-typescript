@@ -34,6 +34,18 @@ export class Maybe<T> {
     })
   }
 
+  static fromPromise<T>(value: Promise<Option<T>>): Maybe<T> {
+    return new this(MaybeState.Pending, (cb: Maybe<T>) => {
+      value.then(result => {
+        if (result.isNone()) {
+          cb.unfullfill();
+        } else {
+          cb.fullfill(result.unwrap());
+        }
+      })
+    })
+  }
+
   static fromOption<T>(value: Option<T>): Maybe<T> {
     if (value.isSome()) {
       return Maybe.Fullfilled(value.unwrap());
