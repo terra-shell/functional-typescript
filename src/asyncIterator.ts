@@ -1,4 +1,6 @@
+import { Future } from "./future";
 import { Maybe } from "./maybe";
+import { Option } from "./option";
 
 export class AsyncIterator<T> {
   static From<T>(iterable: AsyncIterable<T>): AsyncIterator<Awaited<T>> {
@@ -26,5 +28,40 @@ export class AsyncIterator<T> {
       if (result.done) maybe.unfullfill();
       else maybe.fullfill(result.value);
     });
+  }
+
+  public map<N>(mapper: (input: T) => N) {
+    let iterator = this.iterator;
+
+    return new AsyncIterator(async function*() {
+      for await (let item of iterator) {
+        yield mapper(item)
+      }
+    })
+  }
+
+  public flatMap<N>(mapper: (input: T) => (Option<N> | Maybe<N>)) {
+    let iterator = this.iterator;
+
+    return new AsyncIterator(async function*() {
+      for await (let item of iterator) {
+        let result = await mapper(item);
+
+        if (result.isSome()) {
+          yield result.unwrap();
+        }
+      }
+    })
+  }
+
+  public async collectArray(): Promise<T[]> {
+    let iterator = this.iterator;
+    let results = [];
+
+    for await (let item of iterator) {
+      results.push(item);
+    }
+
+    return results;
   }
 }
