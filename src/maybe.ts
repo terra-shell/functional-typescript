@@ -22,6 +22,26 @@ export class Maybe<T> {
     return new Maybe<T>(MaybeState.Pending, callback);
   }
 
+  static fromNullable<T>(value: Promise<T | undefined | null>): Maybe<T> {
+    return new this(MaybeState.Pending, (cb: Maybe<T>) => {
+      value.then(result => {
+        if (result == null || result == undefined) {
+          cb.unfullfill();
+        } else {
+          cb.fullfill(result);
+        }
+      })
+    })
+  }
+
+  static fromOption<T>(value: Option<T>): Maybe<T> {
+    if (value.isSome()) {
+      return Maybe.Fullfilled(value.unwrap());
+    } else {
+      return Maybe.Unfullfilled();
+    }
+  }
+
   private constructor(
     private state: MaybeState,
     private value: T | null | MaybeCallback<T>
@@ -93,24 +113,32 @@ export class Maybe<T> {
     });
   }
   
-  public flatMap<U>(fn: (value: T) => Maybe<U>): Maybe<U> {
+  public flatMap<U>(fn: (value: T) => Maybe<U> | Option<U>): Maybe<U> {
     if (this.isUnfullfilled())
       return Maybe.Unfullfilled();
 
-    if (this.isFullfilled())
-      return fn(this.value as T);
+    if (this.isFullfilled()) {
+      let result = fn(this.value as T);
+
+      if (result instanceof Option) {
+        return Maybe.fromOption(result);
+      } else {
+        return result;
+      }
+    }
 
     return Maybe.new((maybe) => {
-      this.then(value => {
+      this.then(async value => {
         if (value.isNone())
           maybe.unfullfill();
-        else
-          fn(value.unwrap()).then(value => {
-            if (value.isNone())
-              maybe.unfullfill();
-            else
-              maybe.fullfill(value.unwrap());
-          });
+        else {
+          let value2 = await fn(value.unwrap());
+          
+          if (value2.isNone())
+            maybe.unfullfill();
+          else
+            maybe.fullfill(value2.unwrap());
+        }
       });
     });
   }
