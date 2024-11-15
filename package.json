@@ -1,6 +1,6 @@
 {
   "name": "@terrashell/functional-typescript",
-  "version": "2.10.2",
+  "version": "2.11.0",
   "main": "./lib/cjs/index.js",
   "types": "./lib/types/index.d.ts",
   "scripts": {
