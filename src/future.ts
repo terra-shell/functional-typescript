@@ -234,6 +234,40 @@ export class Future<T, E> {
     });
   }
 
+  public inspect(fn: (result: T) => any) {
+    if (this.isResolved()) {
+      fn(this.value as T);
+    }
+
+    return Future.new<T, E>(async f => {
+      let result = await this;
+
+      if (result.isOk()) {
+        fn(result.unwrap());
+        f.resolve(result.unwrap());
+      } else {
+        f.reject(result.unwrapErr())
+      }
+    })
+  }
+
+  public inspectErr(fn: (error: E) => any) {
+    if (this.isRejected()) {
+      fn(this.value as E);
+    }
+
+    return Future.new<T, E>(async f => {
+      let result = await this;
+
+      if (result.isErr()) {
+        fn(result.unwrapErr());
+        f.reject(result.unwrapErr());
+      } else {
+        f.resolve(result.unwrap())
+      }
+    })
+  }
+
   public match() {
     return Matcher.new(evaluator => this.map(evaluator))
   }
